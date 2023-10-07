@@ -164,86 +164,8 @@ def train(
             templates_path=templates_path,
             only_target_loss=only_target_loss
         ))
-    train_dataset, val_dataset = datasets
-    data_collator = DataCollatorForTokenClassification(tokenizer, pad_to_multiple_of=8)
 
-    print("INPUT_IDS")
-    print(data_collator([train_dataset[0], train_dataset[1]])["input_ids"][0])
-    print("MASK")
-    print(data_collator([train_dataset[0], train_dataset[1]])["attention_mask"][0])
-    print("LABELS")
-    print(data_collator([train_dataset[0], train_dataset[1]])["labels"][0])
-
-    model_types = {
-        "causal": AutoModelForCausalLM,
-    }
-    load_in_8bit = bool(config.get("load_in_8bit", False))
-    load_in_4bit = bool(config.get("load_in_4bit", False))
-    use_bf16 = bool(trainer_config.get("bf16", False))
-    torch_dtype = torch.bfloat16 if use_bf16 else torch.float16
-    if load_in_8bit:
-        assert not load_in_4bit
-        model = model_types[model_type].from_pretrained(
-            model_name,
-            load_in_8bit=True,
-            device_map=device_map,
-            torch_dtype=torch_dtype
-        )
-        model = fix_model(model, tokenizer, use_resize=False)
-        model = custom_prepare_model_for_int8_training(model)
-
-    elif load_in_4bit:
-        assert not load_in_8bit
-        model = model_types[model_type].from_pretrained(
-            model_name,
-            load_in_4bit=True,
-            device_map=device_map,
-            quantization_config=BitsAndBytesConfig(
-                load_in_4bit=True,
-                llm_int8_threshold=6.0,
-                llm_int8_has_fp16_weight=False,
-                bnb_4bit_compute_dtype=torch_dtype,
-                bnb_4bit_use_double_quant=True,
-                bnb_4bit_quant_type="nf4"
-            ),
-            torch_dtype=torch_dtype
-        )
-        model = fix_model(model, tokenizer, use_resize=False)
-        model = prepare_model_for_kbit_training(model)
-
-    else:
-        model = model_types[model_type].from_pretrained(model_name)
-        model = fix_model(model, tokenizer)
-
-    # Default model generation params
-    model.config.num_beams = 5
-    model.config.max_length = max_tokens_count
-
-    if not ddp and torch.cuda.device_count() > 1:
-        model.is_parallelizable = True
-        model.model_parallel = True
-
-    if lora_config:
-        lora_config = LoraConfig(**lora_config)
-        model = get_peft_model(model, lora_config)
-
-    trainer_class = Trainer if not omit_base_model_save else TrainerNoBaseSave
-    print("Trainer class:", trainer_class)
-    trainer = trainer_class(
-        model=model,
-        args=training_args,
-        train_dataset=train_dataset,
-        eval_dataset=val_dataset,
-        callbacks=callbacks,
-        data_collator=data_collator
-    )
-
-    if trainer_config.get("report_to", "wandb") == "wandb":
-        wandb.init(project="rulm_self_instruct", name=config_file)
-
-    trainer.train(checkpoint)
-    model.save_pretrained(output_dir)
-
+    print(datasets)
 
 if __name__ == "__main__":
     fire.Fire(train)
