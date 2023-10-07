@@ -168,6 +168,7 @@ def train(
     for chat in datasets:
         for rec in chat:
             print(rec)
+            print('</coruDelimiter>')
 
 if __name__ == "__main__":
     fire.Fire(train)
