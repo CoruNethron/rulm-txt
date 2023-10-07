@@ -89,18 +89,20 @@ class ChatDataset(Dataset):
             input_ids.append(self.tokenizer.eos_token_id)
             labels.append(self.tokenizer.eos_token_id)
 
-        if not self.is_printed:
-            print(input_ids)
-            print(labels)
-            print("Full prompt:", self.tokenizer.decode(input_ids, skip_special_tokens=False))
-            self.is_printed = True
+        return self.tokenizer.decode(input_ids, skip_special_tokens=False)
 
-        input_ids = torch.LongTensor(input_ids)
-        labels = torch.LongTensor(labels)
-        attention_mask = input_ids.new_ones(input_ids.size())
-        assert input_ids.size(0) == labels.size(0) == attention_mask.size(0) <= self.max_tokens_count
-        return {
-            "input_ids": input_ids,
-            "labels": labels,
-            "attention_mask": attention_mask
-        }
+        # if not self.is_printed:
+        #     print(input_ids)
+        #     print(labels)
+        #     print("Full prompt:", self.tokenizer.decode(input_ids, skip_special_tokens=False))
+        #     self.is_printed = True
+
+        # input_ids = torch.LongTensor(input_ids)
+        # labels = torch.LongTensor(labels)
+        # attention_mask = input_ids.new_ones(input_ids.size())
+        # assert input_ids.size(0) == labels.size(0) == attention_mask.size(0) <= self.max_tokens_count
+        # return {
+        #     "input_ids": input_ids,
+        #     "labels": labels,
+        #     "attention_mask": attention_mask
+        # }
