@@ -165,7 +165,8 @@ def train(
             only_target_loss=only_target_loss
         ))
 
-    print(datasets)
+    for rec in datasets:
+        print(rec)
 
 if __name__ == "__main__":
     fire.Fire(train)
